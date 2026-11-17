@@ -1,7 +1,5 @@
 # mobile2_2320007_20262
 
-Aplikasi Mobile 2 - Minimarket App
-
 Praktikum Modul 10 - Pemrograman Mobile 2
 
 ## Teknologi yang Digunakan
@@ -24,4 +22,4 @@ npx expo start
 ```
 
 ## Screenshot
-Screenshot aplikasi tersimpan di folder `screenshots/` atau `hasil_screenshot/`
+Screenshot aplikasi tersimpan di folder `hasil_screenshot/`
