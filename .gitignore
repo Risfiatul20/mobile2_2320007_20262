@@ -39,3 +39,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Backend Laravel (separate repository)
+RisfiatulAppApi/
+
+# Prompt file (no need to upload)
+prompt_ai_agent_lengkap_modul_11_risfiatul_adawiyah_2320007.md
+
+# Pengumpulan file
+2320007_RisfiatulAdawiyah.txt

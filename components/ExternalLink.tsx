@@ -8,6 +8,7 @@ export function ExternalLink(props: Omit<ComponentProps<typeof Link>, 'href'> & 
     <Link
       target="_blank"
       {...props}
+      // @ts-expect-error - External link with string URL
       href={props.href}
       onPress={(e) => {
         if (Platform.OS !== 'web') {

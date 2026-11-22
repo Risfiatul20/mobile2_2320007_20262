@@ -1,124 +1,187 @@
+import { loginApi, saveAuthSession } from "@/src/services/authService";
+import { authStyles } from "@/src/styles/authStyles";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
+    null
+  );
 
-  const handleLogin = () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Email dan password tidak boleh kosong!");
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert(
+        "Input Belum Lengkap",
+        "Silakan masukkan email dan password Anda."
+      );
       return;
     }
-    // Navigate to tabs with email parameter
-    router.replace({
-      pathname: "/(tabs)/home",
-      params: { email },
-    });
+
+    setLoading(true);
+    try {
+      const result = await loginApi({
+        email: email.trim(),
+        password,
+      });
+      await saveAuthSession(result.user, result.token);
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat masuk ke akun.";
+      Alert.alert("Login Gagal", message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={authStyles.safeArea}>
       <KeyboardAvoidingView
+        style={authStyles.flexContainer}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={authStyles.scrollContent}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <Ionicons name="lock-closed" size={48} color="#2563EB" />
-            <Text style={styles.title}>Masuk ke Mobile 2</Text>
-            <Text style={styles.subtitle}>Kelola minimarket Anda dengan mudah</Text>
+          <View style={authStyles.headerArea}>
+            <View style={authStyles.logoBadge}>
+              <Ionicons name="shield-checkmark" size={30} color="#2563EB" />
+            </View>
+            <Text style={authStyles.title}>Selamat Datang</Text>
+            <Text style={authStyles.subtitle}>
+              Masuk ke akun Anda untuk mengakses portal praktikum Mobile 2
+            </Text>
           </View>
 
-          <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="mahasiswa@kampus.ac.id"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+          <View style={authStyles.card}>
+            <View style={authStyles.formGroup}>
+              <Text style={authStyles.label}>Alamat Email</Text>
+              <View
+                style={[
+                  authStyles.inputWrapper,
+                  focusedField === "email" && authStyles.inputWrapperFocused,
+                ]}
+              >
+                <Ionicons
+                  name="mail-outline"
+                  size={20}
+                  color={focusedField === "email" ? "#2563EB" : "#64748B"}
+                  style={authStyles.inputIcon}
+                />
+                <TextInput
+                  style={authStyles.input}
+                  placeholder="nama@kampus.ac.id"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!loading}
+                  value={email}
+                  onChangeText={setEmail}
+                  onFocus={() => setFocusedField("email")}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Masukkan password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+            <View style={authStyles.formGroup}>
+              <Text style={authStyles.label}>Kata Sandi</Text>
+              <View
+                style={[
+                  authStyles.inputWrapper,
+                  focusedField === "password" && authStyles.inputWrapperFocused,
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={focusedField === "password" ? "#2563EB" : "#64748B"}
+                  style={authStyles.inputIcon}
+                />
+                <TextInput
+                  style={authStyles.input}
+                  placeholder="Masukkan kata sandi"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  editable={!loading}
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => setFocusedField("password")}
+                  onBlur={() => setFocusedField(null)}
+                />
+                <TouchableOpacity
+                  style={authStyles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#64748B"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin} activeOpacity={0.8}>
-              <Text style={styles.loginButtonText}>Masuk</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.registerLink}
-              onPress={() => router.push("/register")}
-              activeOpacity={0.7}
+              style={[
+                authStyles.primaryButton,
+                loading && authStyles.primaryButtonDisabled,
+              ]}
+              activeOpacity={0.85}
+              disabled={loading}
+              onPress={handleLogin}
             >
-              <Text style={styles.registerLinkText}>
-                Belum punya akun? <Text style={styles.registerLinkBold}>Daftar</Text>
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={authStyles.primaryButtonText}>
+                    Masuk Sekarang
+                  </Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </>
+              )}
             </TouchableOpacity>
+
+            <View style={authStyles.dividerRow}>
+              <View style={authStyles.dividerLine} />
+              <Text style={authStyles.dividerText}>atau</Text>
+              <View style={authStyles.dividerLine} />
+            </View>
+
+            <View style={authStyles.footerRow}>
+              <Text style={authStyles.footerText}>Belum punya akun?</Text>
+              <TouchableOpacity
+                disabled={loading}
+                onPress={() => router.push("/register")}
+              >
+                <Text style={authStyles.footerLink}>Daftar Sekarang</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
-  container: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: 24, justifyContent: "center" },
-  header: { alignItems: "center", marginBottom: 40 },
-  title: { fontSize: 24, fontWeight: "800", color: "#0F172A", marginTop: 16 },
-  subtitle: { fontSize: 14, color: "#64748B", marginTop: 8 },
-  formContainer: { width: "100%" },
-  inputGroup: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: "600", color: "#0F172A", marginBottom: 8 },
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: "#0F172A",
-  },
-  loginButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  loginButtonText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  registerLink: { alignItems: "center", marginTop: 20 },
-  registerLinkText: { fontSize: 14, color: "#64748B" },
-  registerLinkBold: { fontWeight: "700", color: "#2563EB" },
-});

@@ -1,45 +1,30 @@
-import { router } from "expo-router";
-import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { getAuthSession } from "@/src/services/authService";
+import { authStyles } from "@/src/styles/authStyles";
+import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
-export default function IndexScreen() {
+export default function Index() {
+  const [checking, setChecking] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
+
   useEffect(() => {
-    // Simulate splash screen, then redirect to login
-    const timer = setTimeout(() => {
-      router.replace("/login");
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    getAuthSession()
+      .then((session) => {
+        setHasSession(Boolean(session?.token));
+      })
+      .finally(() => {
+        setChecking(false);
+      });
   }, []);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mobile 2</Text>
-      <Text style={styles.subtitle}>Minimarket App</Text>
-      <ActivityIndicator size="large" color="#2563EB" style={styles.loader} />
-    </View>
-  );
-}
+  if (checking) {
+    return (
+      <View style={authStyles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#64748B",
-    marginBottom: 40,
-  },
-  loader: {
-    marginTop: 20,
-  },
-});
+  return <Redirect href={hasSession ? "/(tabs)/home" : "/login"} />;
+}
